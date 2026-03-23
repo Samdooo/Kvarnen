@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nedre Kvarnen</title>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --primary-hover: #357ABD;
+            --bg: #F4F7F6;
+            --card-bg: #FFFFFF;
+            --text: #333333;
+            --booked-bg: #ffebee;
+            --booked-text: #c62828;
+            --available-bg: #e3f2fd;
+            --available-text: #0a4385;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+
+            background-image: linear-gradient(rgba(244, 247, 246, 0.3), rgba(244, 247, 246, 0.3)), url('kvarnen.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #2d3874;
+            font-size: 3rem;
+            font-weight: 800;
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            color: #666;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .facilities {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+        }
+
+        .card h3 {
+            margin: 15px 0;
+            font-size: 1.4rem;
+        }
+
+        #booking-section {
+            display: none;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        input[type="date"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        /* Tidsväljare */
+        #time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .time-btn {
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .time-btn.available {
+            background-color: var(--available-bg);
+            color: var(--available-text);
+            border: 1px solid #90caf9;
+        }
+
+        .time-btn.available:hover {
+            background-color: #bbdefb;
+        }
+
+        .time-btn.selected {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .time-btn.booked {
+            background-color: var(--booked-bg);
+            color: var(--booked-text);
+            text-decoration: line-through;
+            cursor: not-allowed;
+            opacity: 0.6;
+            border: 1px solid #ffcdd2;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .back-btn {
+            background: none;
+            color: #666;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 20px;
+            text-decoration: underline;
+        }
+
+        #loading {
+            display: none;
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(3px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: popIn 0.3s ease-out forwards;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: #2d3874;
+            font-size: 1.5rem;
+        }
+
+        .modal-content p {
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            color: var(--text);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Nedre Kvarnen</h1>
+
+        <div class="facilities" id="facilities-list">
+            <div class="card" onclick="openBooking('Gym')">
+                <img src="gym.png" alt="Gym">
+                <h3>Gym</h3>
+            </div>
+            <div class="card" onclick="openBooking('Biljard')">
+                <img src="biljard.png" alt="Biljard">
+                <h3>Biljard</h3>
+            </div>
+            <div class="card" onclick="openBooking('Pingis')">
+                <img src="pingis.png" alt="Pingis">
+                <h3>Pingis</h3>
+            </div>
+            <div class="card" onclick="openBooking('Bastu')">
+                <img src="bastu.png" alt="Bastu">
+                <h3>Bastu</h3>
+            </div>
+        </div>
+
+        <div id="booking-section">
+            <button class="back-btn" onclick="goBack()">← Tillbaka</button>
+            <h2 id="selected-facility">Bokning av</h2>
+
+            <div id="loading">Hämtar tillgängliga tider...</div>
+
+            <div class="form-group">
+                <label for="date">Välj datum:</label>
+                <input type="date" id="date" required onchange="renderTimeSlots()">
+            </div>
+
+            <div class="form-group">
+                <label>Välj tid:</label>
+                <div id="time-slots"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="apartment">Lägenhet:</label>
+                <input type="text" id="apartment" placeholder="t.ex. 42B" required oninput="updateSubmitButton()">
+            </div>
+
+            <button class="btn" id="submit-btn" onclick="submitBooking()" disabled>Välj tid</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwnUfsnYgrNTiuQa9SZO_4yS6ZYLWwgJOJchKiVpOUtRXP5WXBDgGsOM-I3cz5XIpQb/exec";
+
+        let currentFacility = "";
+        let selectedTime = "";
+        let allBookings = [];
+
+        const dateInput = document.getElementById('date');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+        dateInput.min = today;
+
+        async function openBooking(facility) {
+            currentFacility = facility;
+            document.getElementById('selected-facility').innerText = `Boka ${facility}`;
+            document.getElementById('facilities-list').style.display = 'none';
+            document.getElementById('booking-section').style.display = 'block';
+
+            await fetchBookings();
+        }
+
+        async function fetchBookings() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('time-slots').innerHTML = '';
+
+            try {
+                const response = await fetch(API_URL, { redirect: "follow" });
+                allBookings = await response.json();
+                renderTimeSlots();
+            } catch (error) {
+                console.error("Kunde inte hämta bokningar", error);
+                showModal("Fel", "Ett fel uppstod när tiderna skulle hämtas. Försök igen.");
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function renderTimeSlots() {
+            const container = document.getElementById('time-slots');
+            container.innerHTML = '';
+            selectedTime = "";
+            updateSubmitButton();
+
+            const selectedDate = document.getElementById('date').value;
+            const startHour = 8;
+            const endHour = 22;
+
+            for (let i = startHour; i < endHour; i++) {
+                const timeString = `${i.toString().padStart(2, '0')}:00 - ${(i + 1).toString().padStart(2, '0')}:00`;
+
+                const isBooked = allBookings.some(b =>
+                    b.facility === currentFacility &&
+                    b.date === selectedDate &&
+                    b.time === timeString
+                );
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'time-btn ' + (isBooked ? 'booked' : 'available');
+                btn.innerText = timeString;
+                btn.disabled = isBooked;
+
+                if (!isBooked) {
+                    btn.onclick = () => selectTimeSlot(timeString, btn);
+                }
+
+                container.appendChild(btn);
+            }
+        }
+
+        function selectTimeSlot(timeString, clickedBtn) {
+            selectedTime = timeString;
+
+            const buttons = document.querySelectorAll('.time-btn.available, .time-btn.selected');
+            buttons.forEach(btn => btn.className = 'time-btn available');
+
+            clickedBtn.className = 'time-btn selected';
+            updateSubmitButton();
+        }
+
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submit-btn');
+            const apartmentValue = document.getElementById('apartment').value.trim();
+
+            if (selectedTime && apartmentValue !== "") {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Bekräfta Bokning";
+            } else if (!selectedTime) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Välj en tid";
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Fyll i lägenhet";
+            }
+        }
+        
+        function goBack() {
+            document.getElementById('booking-section').style.display = 'none';
+            document.getElementById('facilities-list').style.display = 'grid';
+
+            document.getElementById('apartment').value = '';
+            selectedTime = "";
+            updateSubmitButton();
+        }
+
+        async function submitBooking() {
+            const date = document.getElementById('date').value;
+            const apartment = document.getElementById('apartment').value.trim();
+
+            if (!apartment) {
+                showModal("Uppgift saknas.", "Vänligen fyll i ditt lägenhetsnummer.");
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').innerText = "Bokar...";
+
+            const payload = { facility: currentFacility, date: date, time: selectedTime, apartment: apartment };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                });
+                const result = await response.json();
+
+                if (result.status === "error") {
+                    showModal("Fel", result.message);
+                    await fetchBookings();
+                } else {
+                    showModal("Bokning klar!", `${currentFacility} kl ${selectedTime} till lägenhet ${apartment}.`);
+                    goBack();
+                }
+            } catch (error) {
+                showModal("Fel", "Något gick fel vid bokningen. Försök igen.");
+                console.error(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('loading').innerText = "Hämtar tillgängliga tider...";
+            }
+        }
+
+        function showModal(title, message) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            document.getElementById('custom-alert').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('custom-alert').style.display = 'none';
+        }
+    </script>
+
+    <div id="custom-alert" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="alert-title">Meddelande</h3>
+            <p id="alert-message"></p>
+            <button class="btn" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+</body>
+
+</html>
