@@ -274,7 +274,6 @@
             <button class="back-btn" onclick="goBack()">← Tillbaka</button>
             <h2 id="selected-facility">Bokning av</h2>
 
-            <div id="loading">Hämtar tillgängliga tider...</div>
 
             <div class="form-group">
                 <label for="date">Välj datum:</label>
@@ -283,6 +282,7 @@
 
             <div class="form-group">
                 <label>Välj tid:</label>
+                <div id="loading">Hämtar tillgängliga tider...</div>
                 <div id="time-slots"></div>
             </div>
 
@@ -390,7 +390,7 @@
                 submitBtn.innerText = "Fyll i lägenhet";
             }
         }
-        
+
         function goBack() {
             document.getElementById('booking-section').style.display = 'none';
             document.getElementById('facilities-list').style.display = 'grid';
@@ -405,12 +405,11 @@
             const apartment = document.getElementById('apartment').value.trim();
 
             if (!apartment) {
-                showModal("Uppgift saknas.", "Vänligen fyll i ditt lägenhetsnummer.");
+                showModal("Uppgift saknas", "Vänligen fyll i ditt lägenhetsnummer.");
                 return;
             }
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('loading').innerText = "Bokar...";
+            showModal("Bokar...", "Vänligen vänta.", true);
 
             const payload = { facility: currentFacility, date: date, time: selectedTime, apartment: apartment };
 
@@ -426,21 +425,26 @@
                     showModal("Fel", result.message);
                     await fetchBookings();
                 } else {
-                    showModal("Bokning klar!", `${currentFacility} kl ${selectedTime} till lägenhet ${apartment}.`);
+                    showModal("Bokning klar!", `${currentFacility} ${date} kl ${selectedTime} lägenhet ${apartment}.`);
                     goBack();
                 }
             } catch (error) {
                 showModal("Fel", "Något gick fel vid bokningen. Försök igen.");
                 console.error(error);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('loading').innerText = "Hämtar tillgängliga tider...";
             }
         }
 
-        function showModal(title, message) {
+        function showModal(title, message, isLoading = false) {
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-message').innerText = message;
+
+            const okBtn = document.getElementById('modal-ok-btn');
+            if (isLoading) {
+                okBtn.style.display = 'none';
+            } else {
+                okBtn.style.display = 'block';
+            }
+
             document.getElementById('custom-alert').style.display = 'flex';
         }
 
@@ -453,7 +457,7 @@
         <div class="modal-content">
             <h3 id="alert-title">Meddelande</h3>
             <p id="alert-message"></p>
-            <button class="btn" onclick="closeModal()">OK</button>
+            <button id="modal-ok-btn" class="btn" onclick="closeModal()">OK</button>
         </div>
     </div>
 </body>
